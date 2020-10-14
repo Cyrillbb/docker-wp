@@ -25,7 +25,7 @@ services:
     links:
       - example_db:mysql
     volumes:
-      - ./:/var/www/html
+      - ./wp:/var/www/html
       # - ./wp-content:/var/www/html/wp-content
   nginx:
     build: ./docker/nginx
@@ -36,12 +36,17 @@ services:
       - "443:443"
     volumes:
      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-     - ./:/var/www/html
+     - ./wp:/var/www/html
+     - ./database/data:/var/lib/mysql
+     - ./database/initdb.d:/docker-entrypoint-initdb.d
+    #  - ./database/data:/var/lib/mysql
+    #  - ./database/initdb.d:/docker-entrypoint-initdb.d
     links:
-     - example:wordpress
-     - php
+     - example
   
   php:
+    depends_on:
+      - example_db
     build: ./docker/php
     container_name: php
     restart: unless-stopped
@@ -50,6 +55,7 @@ services:
       SERVICE_NAME: app
       SERVICE_TAGS: dev
     volumes:
-      - ./:/var/www/html
-    # networks:
-    #   - blog-network
+      - ./wp:/var/www/html
+    links:
+      - example
+      - example_db:mysql
